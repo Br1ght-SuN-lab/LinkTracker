@@ -8,3 +8,53 @@
 
 В данном файле должна находиться инструкция для ассистента по запуску и настройке бота.
 Полезную для разработки проекта информацию вы можете найти в файле [HELP.md.](./HELP.md)
+
+Требования
+
+Go 1.25+
+Telegram Bot Token
+
+Настройка
+1. Создать Telegram-бота
+
+Создайте бота через @BotFather в Telegram и получите токен.
+
+Настройка
+1. Создать Telegram-бота
+
+Создайте бота через @BotFather в Telegram и получите токен.
+
+Запуск бота
+
+В Git Bash / Linux / MacOS:
+```bash
+set -a
+source .env
+set +a
+go run ./cmd/bot
+```
+Или одной строкой:
+```bash
+set -a; source .env; set +a; go run ./cmd/bot
+```
+В PowerShell (Windows):
+```bash
+$env:APP_TELEGRAM_TOKEN="ваш_токен"
+go run ./cmd/bot
+```
+
+После запуска бот начинает получать обновления через long polling.
+
+Тестирование
+
+Запуск всех тестов:
+
+```bash
+go test ./...
+```
+Подробный режим:
+```bash
+go test -v ./...
+```
+
+
