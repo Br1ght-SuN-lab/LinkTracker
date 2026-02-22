@@ -19,11 +19,6 @@ Telegram Bot Token
 
 Создайте бота через @BotFather в Telegram и получите токен.
 
-Настройка
-1. Создать Telegram-бота
-
-Создайте бота через @BotFather в Telegram и получите токен.
-
 Запуск бота
 
 В Git Bash / Linux / MacOS:
