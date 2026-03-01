@@ -19,37 +19,27 @@ Telegram Bot Token
 
 Создайте бота через @BotFather в Telegram и получите токен.
 
+2. Создайте файл .env 
+3. Поместите токен в .env файл, пример: 
+```bash
+APP_TELEGRAM_TOKEN="<YOUR_TOKEN_NAME>"
+```
+
 Запуск бота
 
 В Git Bash / Linux / MacOS:
 ```bash
-set -a
-source .env
-set +a
-go run ./cmd/bot
-```
-Или одной строкой:
-```bash
-set -a; source .env; set +a; go run ./cmd/bot
-```
-В PowerShell (Windows):
-```bash
-$env:APP_TELEGRAM_TOKEN="ваш_токен"
-go run ./cmd/bot
+make run
 ```
 
 После запуска бот начинает получать обновления через long polling.
 
 Тестирование
 
-Запуск всех тестов:
-
-```bash
-go test ./...
-```
-Подробный режим:
-```bash
-go test -v ./...
+Запуск тестов\детальных тестов
+```bash 
+make test
+make all_tests
 ```
 
 
