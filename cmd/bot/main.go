@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"context"
 	"log/slog"
 	"os"
@@ -11,15 +12,17 @@ import (
 
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-
 	cfg, err := config.Load();
 	if err != nil {
-		logger.Error("failed on get token", 
-		"error", err);
+		fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err) //не придумал как без нагромождений логгировать
+		os.Exit(1)
 	}
+
+	level := config.ParseLogLevel(cfg.LogLevel)
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: level,
+	}))
 
 	App := app.New(cfg, logger)
 
