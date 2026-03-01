@@ -19,8 +19,10 @@ type App struct {
 
 func New(cfg config.Config, logger *slog.Logger) *App {
 	d := dispatcher.New()
-	d.Register("start", handlers.StartHandler)
-	d.Register("help", handlers.HelpHandler)
+	d.Register("start", "запуск телеграмм бота", handlers.StartHandler)
+	d.Register("help", "список доступных команд", func() string {
+		return d.HelpText()
+	})
 
 	return &App {
 		log: logger,

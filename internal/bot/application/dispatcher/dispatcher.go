@@ -1,29 +1,35 @@
 package dispatcher
 
 import (
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handlers"
+	"strings"
+	"fmt"
 )
 
 type HandlerFunc func() string //тип для фукнции
 
+type Command struct {
+	Handler HandlerFunc
+	Desc string 
+}
 type Dispatcher struct {
-	handlers map[string]HandlerFunc
-	unknown HandlerFunc
+	handlers map[string]Command
+	unknown string 
 }
 
 func New() *Dispatcher { //возвращаем указатель, чтобы иметь возможность менять содержание handlers в будущем
 	return &Dispatcher{
-		handlers: map[string]HandlerFunc{
-			"/start": handlers.StartHandler,
-			"/help":  handlers.HelpHandler,
-		},
-		unknown: handlers.UnknownHandler,
+		handlers: map[string]Command{},
+		unknown: "Неизвестная команда. Воспользуйтесь командой /help",
 	}
 }
 
-func (d *Dispatcher) Register(cmd string, h HandlerFunc) {
-	d.handlers[cmd] = h //вместо h любой обработчик
+func (d *Dispatcher) Register(cmd string, desc string, h HandlerFunc) {
+	d.handlers[cmd] = Command{
+        Handler: h,
+        Desc: desc,
+    }
 }
+
 
 func (d *Dispatcher) Dispatch(text string) (reply string, flag bool) {
 	if text == "" {
@@ -32,8 +38,27 @@ func (d *Dispatcher) Dispatch(text string) (reply string, flag bool) {
 
 	h, exists := d.handlers[text]
 	if !exists {
-		return d.unknown(), true
+		return d.unknown, true
 	}
 
-	return h(), true
+	return h.Handler(), true
+}
+
+func (d *Dispatcher) HelpText() string {
+    if len(d.handlers) == 0 {
+        return "Команд пока нет."
+    }
+
+    keys := make([]string, 0, len(d.handlers))
+    for k := range d.handlers {
+        keys = append(keys, k)
+    }
+
+    var res strings.Builder
+    res.WriteString("Доступные команды:\n")
+    for _, k := range keys {
+        c := d.handlers[k]
+        res.WriteString(fmt.Sprintf("/%s — %s\n", k, c.Desc))
+    }
+    return res.String()
 }
