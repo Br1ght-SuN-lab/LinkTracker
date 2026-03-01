@@ -1,16 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"context"
 	"log/slog"
 	"os"
-
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/application/bot/dispatcher"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/application/bot/handlers"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/config"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/infrastructure/telegram"
+	"os/signal"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/app"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/config"
 )
 
 
@@ -21,57 +17,17 @@ func main() {
 
 	cfg, err := config.Load();
 	if err != nil {
-		log.Fatalf("failed on get token: %v", err);
+		logger.Error("failed on get token", 
+		"error", err);
 	}
 
-	fmt.Println("Bot starting with length of token:", len(cfg.TelegramToken));
-	bot, err := tgbotapi.NewBotAPI(cfg.TelegramToken);
-	if err != nil {
-		log.Fatalf("failed on creating bot:%v", err);
-	}
+	App := app.New(cfg, logger)
 
-	if err := telegram.RegisterCommands(bot); err != nil {
-		log.Printf("failed to register commands: %v", err)
-	}
-	u := tgbotapi.NewUpdate(0);
-	u.Timeout = 30; //удержание запроса
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt) //перестаем крутить Run() после ctrl+c
+	defer stop()
 
-	updates := bot.GetUpdatesChan(u);
-	for update := range updates {
-		if update.Message == nil {
-			continue;
-		}
-
-		text := update.Message.Text;
-		chat_id := update.Message.Chat.ID;
-
-		logger.Info("update received",
-			"chat_id", chat_id,
-			"text", text,
-		)
-
-		d := dispatcher.New();
-
-		//в одну строчку можно добавить новую команду
-		d.Register("/start", handlers.StartHandler)
-		d.Register("/help", handlers.HelpHandler)
-
-		reply, ok := d.Dispatch(text);
-		if !ok {
-			continue
-		}
-
-		logger.Info("reply prepared",
-			"chat_id", chat_id,
-			"reply", reply,
-		)
-
-		resp := tgbotapi.NewMessage(chat_id, reply);
-		if _, err := bot.Send(resp); err != nil {
-			logger.Error("send failed",
-				"chat_id", chat_id,
-				"err", err,
-			)
-		}
+	if err := App.Run(ctx); err != nil {
+		logger.Error("app stopped with error", 
+		"error", err)
 	}
 }

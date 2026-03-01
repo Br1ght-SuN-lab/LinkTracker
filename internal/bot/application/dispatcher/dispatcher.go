@@ -1,8 +1,7 @@
 package dispatcher
 
 import (
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/application/bot/command"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/application/bot/handlers"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handlers"
 )
 
 type HandlerFunc func() string //тип для фукнции
@@ -13,15 +12,13 @@ type Dispatcher struct {
 }
 
 func New() *Dispatcher { //возвращаем указатель, чтобы иметь возможность менять содержание handlers в будущем
-	d := &Dispatcher{
+	return &Dispatcher{
 		handlers: map[string]HandlerFunc{
 			"/start": handlers.StartHandler,
 			"/help":  handlers.HelpHandler,
 		},
 		unknown: handlers.UnknownHandler,
 	}
-
-	return d
 }
 
 func (d *Dispatcher) Register(cmd string, h HandlerFunc) {
@@ -29,12 +26,11 @@ func (d *Dispatcher) Register(cmd string, h HandlerFunc) {
 }
 
 func (d *Dispatcher) Dispatch(text string) (reply string, flag bool) {
-	cmd := command.ParseCommand(text)
-
-	if cmd == "" {
+	if text == "" {
 		return "", false
 	}
-	h, exists := d.handlers[cmd]
+
+	h, exists := d.handlers[text]
 	if !exists {
 		return d.unknown(), true
 	}
