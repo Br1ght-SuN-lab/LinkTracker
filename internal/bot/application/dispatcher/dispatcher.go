@@ -1,8 +1,11 @@
 package dispatcher
 
 import (
-	"strings"
 	"fmt"
+	"sort"
+	"strings"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type HandlerFunc func() string //тип для фукнции
@@ -44,6 +47,7 @@ func (d *Dispatcher) Dispatch(text string) (reply string, flag bool) {
 	return h.Handler(), true
 }
 
+
 func (d *Dispatcher) HelpText() string {
     if len(d.handlers) == 0 {
         return "Команд пока нет."
@@ -61,4 +65,28 @@ func (d *Dispatcher) HelpText() string {
         res.WriteString(fmt.Sprintf("/%s — %s\n", k, c.Desc))
     }
     return res.String()
+}
+
+
+func (d *Dispatcher) SetMyCommands(bot *tgbotapi.BotAPI) error {
+	//мне кажется прикольно отсортировать команды
+	keys := make([]string, 0, len(d.handlers))
+	for k := range d.handlers {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	cmds := make([]tgbotapi.BotCommand, 0, len(d.handlers))
+	for _, key := range keys {
+		cmds = append(cmds, tgbotapi.BotCommand{
+			Command: key,
+			Description: d.handlers[key].Desc,
+		})
+	}
+
+	cfg := tgbotapi.NewSetMyCommands(cmds...)
+
+	_, err := bot.Request(cfg)
+	return err
 }
