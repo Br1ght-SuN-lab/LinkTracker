@@ -21,7 +21,6 @@ type App struct {
 func New(cfg config.Config, logger *slog.Logger) *App {
 	d := dispatcher.New()
 	d.Register("start", "запуск телеграмм бота", handlers.Start)
-	d.Register("avoid", "запуск телеграмм бота", handlers.Start)
 	getHelpText := func() string {return outer.HelpText(d)}
 	d.Register("help", "список доступных команд", handlers.Help(func() string {return getHelpText()}))
 
