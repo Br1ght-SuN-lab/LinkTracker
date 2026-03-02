@@ -1,92 +1,60 @@
 package dispatcher
 
-import (
-	"fmt"
-	"sort"
-	"strings"
-
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-)
+import "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handlers"
 
 type HandlerFunc func() string //тип для фукнции
 
 type Command struct {
 	Handler HandlerFunc
-	Desc string 
+	Desc    string
 }
 type Dispatcher struct {
 	handlers map[string]Command
-	unknown string 
+	unknown HandlerFunc
 }
 
 func New() *Dispatcher { //возвращаем указатель, чтобы иметь возможность менять содержание handlers в будущем
 	return &Dispatcher{
 		handlers: map[string]Command{},
-		unknown: "Неизвестная команда. Воспользуйтесь командой /help",
+		unknown:  handlers.Unknown,
 	}
 }
 
 func (d *Dispatcher) Register(cmd string, desc string, h HandlerFunc) {
 	d.handlers[cmd] = Command{
-        Handler: h,
-        Desc: desc,
-    }
+		Handler: h,
+		Desc:    desc,
+	}
+}
+
+// найти команду, нужно в infrastructure/outer/
+func (d *Dispatcher) Find(cmd string) (HandlerFunc, bool) {
+	c, ok := d.handlers[cmd]
+	if !ok {
+		return nil, false
+	}
+
+	return c.Handler, true
 }
 
 
-func (d *Dispatcher) Dispatch(text string) (reply string, flag bool) {
-	if text == "" {
-		return "", false
-	}
+func (d *Dispatcher) UnknownText() string {
+	return d.unknown()
+}
 
-	h, exists := d.handlers[text]
-	if !exists {
-		return d.unknown, true
-	}
-
-	return h.Handler(), true
+type CommandMeta struct {
+	Cmd  string
+	Desc string
 }
 
 
-func (d *Dispatcher) HelpText() string {
-    if len(d.handlers) == 0 {
-        return "Команд пока нет."
-    }
-
-    keys := make([]string, 0, len(d.handlers))
-    for k := range d.handlers {
-        keys = append(keys, k)
-    }
-
-    var res strings.Builder
-    res.WriteString("Доступные команды:\n")
-    for _, k := range keys {
-        c := d.handlers[k]
-        res.WriteString(fmt.Sprintf("/%s — %s\n", k, c.Desc))
-    }
-    return res.String()
-}
-
-
-func (d *Dispatcher) SetMyCommands(bot *tgbotapi.BotAPI) error {
-	//мне кажется прикольно отсортировать команды
-	keys := make([]string, 0, len(d.handlers))
-	for k := range d.handlers {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-
-	cmds := make([]tgbotapi.BotCommand, 0, len(d.handlers))
-	for _, key := range keys {
-		cmds = append(cmds, tgbotapi.BotCommand{
-			Command: key,
-			Description: d.handlers[key].Desc,
+func (d *Dispatcher) Commands() []CommandMeta {
+	out := make([]CommandMeta, 0, len(d.handlers))
+	for k, v := range d.handlers {
+		out = append(out, CommandMeta{
+			Cmd: k, 
+			Desc: v.Desc,
 		})
 	}
-
-	cfg := tgbotapi.NewSetMyCommands(cmds...)
-
-	_, err := bot.Request(cfg)
-	return err
+	return out
 }

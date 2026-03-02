@@ -8,6 +8,7 @@ import (
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/dispatcher"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handlers"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/config"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/outer"
 )
 
 type App struct {
@@ -19,11 +20,10 @@ type App struct {
 
 func New(cfg config.Config, logger *slog.Logger) *App {
 	d := dispatcher.New()
-	d.Register("start", "запуск телеграмм бота", handlers.StartHandler)
-	d.Register("avoid", "отправка запроса по http протоколу", handlers.StartHandler)
-	d.Register("help", "список доступных команд", func() string {
-		return d.HelpText()
-	})
+	d.Register("start", "запуск телеграмм бота", handlers.Start)
+	d.Register("avoid", "запуск телеграмм бота", handlers.Start)
+	getHelpText := func() string {return outer.HelpText(d)}
+	d.Register("help", "список доступных команд", handlers.Help(func() string {return getHelpText()}))
 
 	return &App {
 		log: logger,
@@ -41,7 +41,7 @@ func (a *App) Run(ctx context.Context) error {
 		return err;
 	}
 
-	if err := a.dispatcher.SetMyCommands(bot); err != nil {
+	if err := outer.SetMyCommands(bot, a.dispatcher); err != nil {
 		a.log.Info("mycommands not register in tg_bot",
 		"error", err)
 	}
@@ -78,7 +78,7 @@ func (a *App) Run(ctx context.Context) error {
 				"text", text,
 			)
 
-			reply, ok := a.dispatcher.Dispatch(cmd);
+			reply, ok := outer.Dispatch(a.dispatcher, cmd);
 			if !ok {
 				continue	
 			}

@@ -8,7 +8,7 @@ import (
 
 
 func New(log_lvl string) (logger *slog.Logger) {
-	level := config.ParseLogLevel(log_lvl)
+	level := config.ParseLogLevel(log_lvl).ToSlog()
 	logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: level,
 	}))
