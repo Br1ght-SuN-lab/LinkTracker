@@ -4,96 +4,82 @@ import (
 	"context"
 	"log/slog"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/dispatcher"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handlers"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/config"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/outer"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/telegram"
 )
 
 type App struct {
 	token string
 	log *slog.Logger
+	telegram *telegram.TelegramBot
 	dispatcher *dispatcher.Dispatcher
 }
 
 
-func New(cfg config.Config, logger *slog.Logger) *App {
+func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot) *App {
 	d := dispatcher.New()
-	d.Register("start", "запуск телеграмм бота", handlers.Start)
-	getHelpText := func() string {return outer.HelpText(d)}
-	d.Register("help", "список доступных команд", handlers.Help(func() string {return getHelpText()}))
+	telegram.RegistrationCommands(d);
 
 	return &App {
-		log: logger,
 		token: cfg.TelegramToken,
+		log: logger,
+		telegram: telegram,
 		dispatcher: d,
 	}
 }
 
 
 func (a *App) Run(ctx context.Context) error {
-	bot, err := tgbotapi.NewBotAPI(a.token);
-	if err != nil {
-		a.log.Error("failed on starting bot", 
-		"error", err);
-		return err;
-	}
+	bot := a.telegram;
+	api := a.telegram.Api;
 
-	if err := outer.SetMyCommands(bot, a.dispatcher); err != nil {
+	if err := bot.SetMyCommands(a.dispatcher); err != nil {
 		a.log.Info("mycommands not register in tg_bot",
 		"error", err)
 	}
 
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 30; //удержание запроса
-
-	updates := bot.GetUpdatesChan(u);
+	events := bot.ReceiveMessages()
 
 	for {
 		select {
 		case <- ctx.Done():
-			bot.StopReceivingUpdates()
+			api.StopReceivingUpdates()
 			return nil;
-		case update, ok := <- updates:
+		case event, ok := <- events:
 			if !ok {
 				return nil
 			}
 
-			if update.Message == nil {
-				continue;
+			if event.Type != "command" {
+				continue
 			}
 
-			if !update.Message.IsCommand() { 
-				continue 
-			}
-
-			text := update.Message.Text;
-			cmd := update.Message.Command();
-			chat_id := update.Message.Chat.ID;
+			text := event.Message.Text;
+			cmd := event.Message.Command;
+			chatID := event.Message.ChatID;
 
 			a.log.Info("update received",
-				"chat_id", chat_id,
+				"chat_id", chatID,
 				"text", text,
 			)
 
-			reply, ok := outer.Dispatch(a.dispatcher, cmd);
+			reply, ok := dispatcher.Dispatch(a.dispatcher, cmd);
 			if !ok {
 				continue	
 			}
 
 			a.log.Info("reply prepared",
-				"chat_id", chat_id,
+				"chat_id", chatID,
 				"reply", reply,
 			)
 
-			resp := tgbotapi.NewMessage(chat_id, reply);
-			if _, err := bot.Send(resp); err != nil {
+			if err := bot.Send(chatID, reply); err != nil {
 				a.log.Error("send failed",
-					"chat_id", chat_id,
+					"chat_id", chatID,
 					"err", err,
 				)
-				return err;
+				return err
 			}
 		}
 	}

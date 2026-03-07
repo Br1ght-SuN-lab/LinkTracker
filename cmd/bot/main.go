@@ -1,13 +1,15 @@
 package main
 
 import (
-	"log"
 	"context"
+	"log"
 	"os"
 	"os/signal"
+
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/app"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/config"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/logger"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/telegram"
 )
 
 
@@ -19,7 +21,13 @@ func main() {
 
 	logger := logger.New(cfg.LogLevel)
 
-	App := app.New(cfg, logger)
+	telegram, err := telegram.NewTelegramBot(cfg.TelegramToken, *logger);
+	
+	if err != nil {
+		logger.Error("bot not created",
+		"error", err);
+	}
+	App := app.New(cfg, logger, telegram);
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt) //перестаем крутить Run() после ctrl+c
 	defer stop()
