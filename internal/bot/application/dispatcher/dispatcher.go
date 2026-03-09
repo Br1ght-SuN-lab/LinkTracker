@@ -65,7 +65,7 @@ func (d *Dispatcher) Commands() []command.Meta {
 }
 
 
-func Dispatch(d *Dispatcher, text string) (reply string, ok bool) {
+func (d *Dispatcher) Dispatch(text string) (reply string, ok bool) {
 	if text == "" {
 		return "", false
 	}

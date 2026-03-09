@@ -50,7 +50,7 @@ func (a *App) Run(ctx context.Context) error {
 			"text", text,
 		)
 
-		reply, ok := dispatcher.Dispatch(a.dispatcher, cmd);
+		reply, ok := a.dispatcher.Dispatch(cmd);
 		if !ok {
 			continue	
 		}
