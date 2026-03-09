@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	TelegramToken string
-	LogLevel string `yaml:"loglevel"`
+	LogLevel string
 }
 
 
