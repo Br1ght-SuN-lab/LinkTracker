@@ -19,7 +19,7 @@ type App struct {
 
 func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot) *App {
 	d := dispatcher.New()
-	telegram.RegistrationCommands(d);
+	d.RegistrationCommands();
 
 	return &App {
 		token: cfg.TelegramToken,
@@ -32,55 +32,42 @@ func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot
 
 func (a *App) Run(ctx context.Context) error {
 	bot := a.telegram;
-	api := a.telegram.Api;
 
-	if err := bot.SetMyCommands(a.dispatcher); err != nil {
+	if err := bot.SetCommands(a.dispatcher); err != nil {
 		a.log.Info("mycommands not register in tg_bot",
 		"error", err)
 	}
 
-	events := bot.ReceiveMessages()
+	events := bot.ReceiveMessages(ctx)
 
-	for {
-		select {
-		case <- ctx.Done():
-			api.StopReceivingUpdates()
-			return nil;
-		case event, ok := <- events:
-			if !ok {
-				return nil
-			}
+	for event := range events{
+		text := event.Text;
+		cmd := event.Command;
+		chatID := event.ChatID;
 
-			if event.Type != "command" {
-				continue
-			}
+		a.log.Info("update received",
+			"chat_id", chatID,
+			"text", text,
+		)
 
-			text := event.Message.Text;
-			cmd := event.Message.Command;
-			chatID := event.Message.ChatID;
+		reply, ok := dispatcher.Dispatch(a.dispatcher, cmd);
+		if !ok {
+			continue	
+		}
 
-			a.log.Info("update received",
+		a.log.Info("reply prepared",
+			"chat_id", chatID,
+			"reply", reply,
+		)
+
+		if err := bot.Send(chatID, reply); err != nil {
+			a.log.Error("send failed",
 				"chat_id", chatID,
-				"text", text,
+				"err", err,
 			)
-
-			reply, ok := dispatcher.Dispatch(a.dispatcher, cmd);
-			if !ok {
-				continue	
-			}
-
-			a.log.Info("reply prepared",
-				"chat_id", chatID,
-				"reply", reply,
-			)
-
-			if err := bot.Send(chatID, reply); err != nil {
-				a.log.Error("send failed",
-					"chat_id", chatID,
-					"err", err,
-				)
-				return err
-			}
+			return err
 		}
 	}
+
+	return nil
 }

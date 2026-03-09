@@ -1,8 +1,11 @@
 package dispatcher
 
-import "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handler/unknown"
+import (
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handler"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
+)
 
-type HandlerFunc func() string //тип для фукнции
+type HandlerFunc func() string //тип для функции
 
 type Command struct {
 	Handler HandlerFunc
@@ -28,7 +31,13 @@ func (d *Dispatcher) Register(cmd string, desc string, h HandlerFunc) {
 	}
 }
 
-// найти команду, нужно в infrastructure/outer/
+
+func (d *Dispatcher) RegistrationCommands() {
+    d.Register("start", "запуск телеграмм бота", handler.Start)
+	d.Register("help", "список доступных команд", handler.Help(d))
+}
+
+
 func (d *Dispatcher) Find(cmd string) (HandlerFunc, bool) {
 	c, ok := d.handlers[cmd]
 	if !ok {
@@ -43,16 +52,11 @@ func (d *Dispatcher) UnknownText() string {
 	return d.unknown()
 }
 
-type CommandMeta struct {
-	Cmd  string
-	Desc string
-}
 
-
-func (d *Dispatcher) Commands() []CommandMeta {
-	out := make([]CommandMeta, 0, len(d.handlers))
+func (d *Dispatcher) Commands() []command.Meta {
+	out := make([]command.Meta, 0, len(d.handlers))
 	for k, v := range d.handlers {
-		out = append(out, CommandMeta{
+		out = append(out, command.Meta{
 			Cmd: k, 
 			Desc: v.Desc,
 		})

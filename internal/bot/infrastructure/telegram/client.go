@@ -1,42 +1,41 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/dispatcher"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handler/help"
-    "gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handler/start"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/types"
 )
 
 type TelegramBot struct {
-	Api tgbotapi.BotAPI
-	logger slog.Logger
+	api tgbotapi.BotAPI
+	logger *slog.Logger
 }
 
 
-func NewTelegramBot(token string, logger slog.Logger) (*TelegramBot, error) {
+func NewTelegramBot(token string, logger *slog.Logger) (*TelegramBot, error) {
 	api, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot api: %w", err)
 	}
 
 	return &TelegramBot{
-		Api:    *api,
+		api:    *api,
 		logger: logger,
 	}, nil
 }
 
 
-func (bot *TelegramBot) RegistrationCommands(d *dispatcher.Dispatcher) {
-    d.Register("start", "запуск телеграмм бота", handler.Start)
-	getHelpText := func() string {return help.HelpText(d)}
-	d.Register("help", "список доступных команд", help.Help(func() string {return getHelpText()}))
-}
+// func (bot *TelegramBot) RegistrationCommands(d *dispatcher.Dispatcher) {
+//     d.Register("start", "запуск телеграмм бота", handler.Start)
+// 	d.Register("help", "список доступных команд", help.Help(d))
+// }
 
 
-func (bot *TelegramBot) SetMyCommands(d *dispatcher.Dispatcher) error {
+func (bot *TelegramBot) SetCommands(d *dispatcher.Dispatcher) error {
 	meta := d.Commands()
 
 	cmds := make([]tgbotapi.BotCommand, 0, len(meta))
@@ -48,60 +47,68 @@ func (bot *TelegramBot) SetMyCommands(d *dispatcher.Dispatcher) error {
 	}
 
 	cfg := tgbotapi.NewSetMyCommands(cmds...)
-	_, err := bot.Api.Request(cfg)
+	_, err := bot.api.Request(cfg)
 	return err
 }
 
 
-func (bot *TelegramBot) ReceiveMessages() <-chan MyEvent {
-    eventChan := make(chan MyEvent, 100)
+func (bot *TelegramBot) ReceiveMessages(ctx context.Context) <-chan types.Event {
+    eventChan := make(chan types.Event, 100)
     
     u := tgbotapi.NewUpdate(0)
     u.Timeout = 60
-    updates := bot.Api.GetUpdatesChan(u)
+    updates := bot.api.GetUpdatesChan(u)
     
     go func() {
-        for update := range updates {
-            event := bot.convertUpdate(&update)
-            eventChan <- event
-        }
+		defer close(eventChan) //закрытие моего канала
+		defer bot.api.StopReceivingUpdates()
+
+		for {
+			select {
+			case <- ctx.Done():
+				return
+			case update, ok := <-updates:
+				if !ok {
+					return
+				}
+
+				event := bot.convertUpdate(&update);
+				select {
+				case eventChan <- *event:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
     }()
     
     return eventChan
 }
 
 
-func (bot *TelegramBot) convertUpdate(update *tgbotapi.Update) MyEvent {
+func (bot *TelegramBot) convertUpdate(update *tgbotapi.Update) *types.Event {
 	if update.Message != nil {
 		msg := update.Message
 		
-		myMsg := &MyMessage{
+		event := &types.Event{
 			Text: msg.Text,
 			ChatID: msg.Chat.ID,
 			Time: msg.Time(),
 		}
 
 		if msg.IsCommand() {
-			myMsg.Command = msg.Command()
+			event.Command = msg.Command()
 		}
 
-		eventType := "message"
-		if msg.IsCommand() {
-			eventType = "command"
-		}
-
-		return MyEvent{
-			Type: eventType,
-			Message: myMsg,
-		}
+		return event
 	}
 
-	return MyEvent{Type: "unknown"}
+	return nil
 }
 
 
-func (b *TelegramBot) Send(chatID int64, text string) error {
+func (bot *TelegramBot) Send(chatID int64, text string) error {
 	msg := tgbotapi.NewMessage(chatID, text)
-	_, err := b.Api.Send(msg)
+	_, err := bot.api.Send(msg)
 	return err
 }

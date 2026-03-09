@@ -1,16 +1,11 @@
-package telegram
+package types
 
 import "time"
 
-type MyMessage struct {
+type Event struct {
     Text      string
     ChatID    int64
     Command   string
     Time      time.Time
-}
-
-type MyEvent struct {
-	Type     string 
-	Message *MyMessage
 }
 

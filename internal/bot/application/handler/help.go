@@ -1,14 +1,13 @@
-package help
+package handler
 
 import (
 	"fmt"
 	"strings"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/dispatcher"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
 )
 
-
-func HelpText(d *dispatcher.Dispatcher) string {
-	cmds := d.Commands()
+func HelpText(p command.Provider) string {
+	cmds := p.Commands()
 	if len(cmds) == 0 {
 		return "Команд пока нет."
 	}
@@ -22,8 +21,8 @@ func HelpText(d *dispatcher.Dispatcher) string {
 }
 
 
-func Help(getHelpText func() string) (func() string) {
+func Help(p command.Provider) func() string {
 	return func() string {
-		return getHelpText()
+		return HelpText(p)
 	}
 }

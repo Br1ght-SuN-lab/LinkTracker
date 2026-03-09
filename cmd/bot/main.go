@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/app"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/config"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/logger"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/telegram"
@@ -21,10 +21,10 @@ func main() {
 
 	logger := logger.New(cfg.LogLevel)
 
-	telegram, err := telegram.NewTelegramBot(cfg.TelegramToken, *logger);
+	telegram, err := telegram.NewTelegramBot(cfg.TelegramToken, logger);
 	
 	if err != nil {
-		logger.Error("bot not created",
+		logger.Error("bot not created", 
 		"error", err);
 	}
 	App := app.New(cfg, logger, telegram);
