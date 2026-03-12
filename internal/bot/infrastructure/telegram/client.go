@@ -3,19 +3,17 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/dispatcher"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/types"
 )
 
 type TelegramBot struct {
 	api    *tgbotapi.BotAPI
-	logger *slog.Logger
 }
 
-func NewTelegramBot(token string, logger *slog.Logger) (*TelegramBot, error) {
+func NewTelegramBot(token string) (*TelegramBot, error) {
 	api, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot api: %w", err)
@@ -23,18 +21,15 @@ func NewTelegramBot(token string, logger *slog.Logger) (*TelegramBot, error) {
 
 	return &TelegramBot{
 		api:    api,
-		logger: logger,
 	}, nil
 }
 
-func (bot *TelegramBot) SetCommands(d *dispatcher.Dispatcher) error {
-	meta := d.Commands()
-
-	cmds := make([]tgbotapi.BotCommand, 0, len(meta))
-	for _, m := range meta {
+func (bot *TelegramBot) SetCommands(commands map[command.Name]string) error {
+	cmds := make([]tgbotapi.BotCommand, 0, len(commands))
+	for k, v := range commands {
 		cmds = append(cmds, tgbotapi.BotCommand{
-			Command:     string(m.Name),
-			Description: m.Desc,
+			Command:     string(k),
+			Description: v,
 		})
 	}
 

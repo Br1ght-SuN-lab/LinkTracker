@@ -1,39 +1,38 @@
 package logger
 
 import (
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/types"
 	"log/slog"
 	"os"
 )
 
-func GetLevel(s types.LogLevel) types.LogLevel {
-	switch types.LogLevel(s) {
-	case types.LogInfo, types.LogDebug, types.LogWarn, types.LogError:
-		return types.LogLevel(s)
-	default:
-		return types.LogInfo
-	}
-}
+type LogLevel string
 
-func ToSlog(l types.LogLevel) slog.Level {
-	switch l {
-	case types.LogDebug:
+const (
+	LogDebug LogLevel = "debug"
+	LogInfo  LogLevel = "info"
+	LogWarn  LogLevel = "warn"
+	LogError LogLevel = "error"
+)
+
+func GetLevel(s LogLevel) slog.Level {
+	switch LogLevel(s) {
+	case LogDebug:
 		return slog.LevelDebug
-	case types.LogInfo:
+	case LogInfo:
 		return slog.LevelInfo
-	case types.LogWarn:
+	case LogWarn:
 		return slog.LevelWarn
-	case types.LogError:
+	case LogError:
 		return slog.LevelError
 	default:
 		return slog.LevelInfo
 	}
 }
 
-func New(logLevel types.LogLevel) (logger *slog.Logger) {
-	level := GetLevel(logLevel)
+
+func New(logLevel LogLevel) (logger *slog.Logger) {
 	logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: ToSlog(level),
+		Level: GetLevel(logLevel),
 	}))
 	return logger
 }

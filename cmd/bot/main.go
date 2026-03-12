@@ -20,7 +20,7 @@ func main() {
 
 	logger := logger.New(cfg.LogLevel)
 
-	telegram, err := telegram.NewTelegramBot(cfg.TelegramToken, logger)
+	telegram, err := telegram.NewTelegramBot(cfg.TelegramToken)
 
 	if err != nil {
 		logger.Error("bot not created",

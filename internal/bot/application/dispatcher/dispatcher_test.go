@@ -11,8 +11,8 @@ import (
 func TestRegisterAndDispatch(t *testing.T) {
 	d := New()
 
-	d.Register("start", "запуск телеграмм бота", handler.Start{})
-	d.Register("help", "список доступных команд", handler.Help{
+	d.Register(handler.Start{})
+	d.Register(handler.Help{
 		Descriptions: map[command.Name]string {
 			"start": "запуск телеграмм бота",
 			"help":  "список доступных команд",
@@ -22,7 +22,7 @@ func TestRegisterAndDispatch(t *testing.T) {
 	got:= d.Dispatch("start")
 	require.Equal(t, "Привет! Чтобы посмотреть список доступных команд, воспользуйся командой /help", got)
 
-	require.Len(t, d.Commands(), 2)
+	require.Len(t, d.handlers, 2)
 }
 
 

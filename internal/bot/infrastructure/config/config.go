@@ -3,14 +3,14 @@ package config
 import (
 	"fmt"
 	"github.com/joho/godotenv"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/types"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/logger"
 	"gopkg.in/yaml.v3"
 	"os"
 )
 
 type Config struct {
 	TelegramToken string
-	LogLevel      types.LogLevel `yaml:"logLevel"`
+	LogLevel      logger.LogLevel `yaml:"logLevel"`
 }
 
 func Load(path string) (*Config, error) {

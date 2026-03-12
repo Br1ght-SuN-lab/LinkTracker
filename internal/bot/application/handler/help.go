@@ -12,15 +12,20 @@ type Help struct {
 	Descriptions map[command.Name]string
 }
 
-func (c Help) Handle() string {
-	if len(c.Descriptions) == 0 {
-		return "Команд пока нет."
-	}
+func (Help) Name() command.Name {
+	return command.Help
+}
 
+func (Help) Description() string {
+	return "список доступных команд"
+}
+
+func (c Help) Handle() string {
 	var names []string
 	for name := range c.Descriptions {
 		names = append(names, string(name))
 	}
+
 	sort.Strings(names)
 	var b strings.Builder
 	b.WriteString("Доступные команды:\n")

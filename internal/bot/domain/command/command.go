@@ -7,9 +7,6 @@ const (
 	Help  Name = "help"
 )
 
-type Handler interface {
-	Handle() string
-}
 
 type Meta struct {
 	Name Name

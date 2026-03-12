@@ -16,6 +16,7 @@ type App struct {
 	log        *slog.Logger
 	telegram   *telegram.TelegramBot
 	dispatcher *dispatcher.Dispatcher
+	commands   map[command.Name]string
 }
 
 func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot) *App {
@@ -26,26 +27,27 @@ func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot
 		command.Help:  "список доступных команд",
 	}
 
-	startcmd := handler.Start{}
-	helpcmd := handler.Help{
-		Descriptions: descriptions,
-	}
-
-	d.Register(command.Start, descriptions[command.Start], startcmd)
-	d.Register(command.Help, descriptions[command.Help], helpcmd)
-
 	return &App{
 		token:      cfg.TelegramToken,
 		log:        logger,
 		telegram:   telegram,
 		dispatcher: d,
+		commands: descriptions,
 	}
 }
 
 func (a *App) Run(ctx context.Context) error {
+	startcmd := handler.Start{}
+	helpcmd := handler.Help{
+		Descriptions: a.commands,
+	}
+
+	a.dispatcher.Register(startcmd)
+	a.dispatcher.Register(helpcmd)
+
 	bot := a.telegram
 
-	if err := bot.SetCommands(a.dispatcher); err != nil {
+	if err := bot.SetCommands(a.commands); err != nil {
 		a.log.Info("mycommands not register in tg_bot",
 			"error", err)
 	}

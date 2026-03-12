@@ -5,33 +5,26 @@ import (
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
 )
 
+type Handler interface {
+	Handle() string
+	Name() command.Name
+	Description() string 
+}
+
 type Dispatcher struct {
-	handlers map[command.Name]command.Handler
-	meta     map[command.Name]string
+	handlers map[command.Name]Handler
 }
 
 func New() *Dispatcher { //возвращаем указатель, чтобы иметь возможность менять содержание handlers в будущем
 	return &Dispatcher{
-		handlers: make(map[command.Name]command.Handler),
-		meta:     make(map[command.Name]string),
+		handlers: make(map[command.Name]Handler),
 	}
 }
 
-func (d *Dispatcher) Register(name command.Name, desc string, h command.Handler) {
-	d.handlers[name] = h
-	d.meta[name] = desc
+func (d *Dispatcher) Register(h Handler) {
+	d.handlers[h.Name()] = h
 }
 
-func (d *Dispatcher) Commands() []command.Meta {
-	out := make([]command.Meta, 0, len(d.meta))
-	for name, desc := range d.meta {
-		out = append(out, command.Meta{
-			Name: name,
-			Desc: desc,
-		})
-	}
-	return out
-}
 
 func (d *Dispatcher) Dispatch(name command.Name) string {
 	h, ok := d.handlers[name]
