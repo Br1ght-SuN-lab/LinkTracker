@@ -1,10 +1,17 @@
 package command
 
-type Meta struct{
-	Cmd string
-	Desc string
+type Name string
+
+const (
+	Start Name = "start"
+	Help  Name = "help"
+)
+
+type Handler interface {
+	Handle() string
 }
 
-type Provider interface {
-	Commands() []Meta
+type Meta struct {
+	Name Name
+	Desc string
 }

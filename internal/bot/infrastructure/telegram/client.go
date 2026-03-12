@@ -11,10 +11,9 @@ import (
 )
 
 type TelegramBot struct {
-	api tgbotapi.BotAPI
+	api    *tgbotapi.BotAPI
 	logger *slog.Logger
 }
-
 
 func NewTelegramBot(token string, logger *slog.Logger) (*TelegramBot, error) {
 	api, err := tgbotapi.NewBotAPI(token)
@@ -23,17 +22,10 @@ func NewTelegramBot(token string, logger *slog.Logger) (*TelegramBot, error) {
 	}
 
 	return &TelegramBot{
-		api:    *api,
+		api:    api,
 		logger: logger,
 	}, nil
 }
-
-
-// func (bot *TelegramBot) RegistrationCommands(d *dispatcher.Dispatcher) {
-//     d.Register("start", "запуск телеграмм бота", handler.Start)
-// 	d.Register("help", "список доступных команд", help.Help(d))
-// }
-
 
 func (bot *TelegramBot) SetCommands(d *dispatcher.Dispatcher) error {
 	meta := d.Commands()
@@ -41,7 +33,7 @@ func (bot *TelegramBot) SetCommands(d *dispatcher.Dispatcher) error {
 	cmds := make([]tgbotapi.BotCommand, 0, len(meta))
 	for _, m := range meta {
 		cmds = append(cmds, tgbotapi.BotCommand{
-			Command:     m.Cmd,
+			Command:     string(m.Name),
 			Description: m.Desc,
 		})
 	}
@@ -51,28 +43,27 @@ func (bot *TelegramBot) SetCommands(d *dispatcher.Dispatcher) error {
 	return err
 }
 
-
 func (bot *TelegramBot) ReceiveMessages(ctx context.Context) <-chan types.Event {
-    eventChan := make(chan types.Event, 100)
-    
-    u := tgbotapi.NewUpdate(0)
-    u.Timeout = 60
-    updates := bot.api.GetUpdatesChan(u)
-    
-    go func() {
+	eventChan := make(chan types.Event, 100)
+
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+	updates := bot.api.GetUpdatesChan(u)
+
+	go func() {
 		defer close(eventChan) //закрытие моего канала
 		defer bot.api.StopReceivingUpdates()
 
 		for {
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
 				return
 			case update, ok := <-updates:
 				if !ok {
 					return
 				}
 
-				event := bot.convertUpdate(&update);
+				event := bot.convertUpdate(&update)
 				select {
 				case eventChan <- *event:
 				case <-ctx.Done():
@@ -80,20 +71,19 @@ func (bot *TelegramBot) ReceiveMessages(ctx context.Context) <-chan types.Event 
 				}
 			}
 		}
-    }()
-    
-    return eventChan
-}
+	}()
 
+	return eventChan
+}
 
 func (bot *TelegramBot) convertUpdate(update *tgbotapi.Update) *types.Event {
 	if update.Message != nil {
 		msg := update.Message
-		
+
 		event := &types.Event{
-			Text: msg.Text,
+			Text:   msg.Text,
 			ChatID: msg.Chat.ID,
-			Time: msg.Time(),
+			Time:   msg.Time(),
 		}
 
 		if msg.IsCommand() {
@@ -105,7 +95,6 @@ func (bot *TelegramBot) convertUpdate(update *tgbotapi.Update) *types.Event {
 
 	return nil
 }
-
 
 func (bot *TelegramBot) Send(chatID int64, text string) error {
 	msg := tgbotapi.NewMessage(chatID, text)

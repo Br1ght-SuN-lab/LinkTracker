@@ -2,16 +2,16 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"github.com/joho/godotenv"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/types"
 	"gopkg.in/yaml.v3"
+	"os"
 )
 
 type Config struct {
 	TelegramToken string
-	LogLevel string
+	LogLevel      types.LogLevel `yaml:"logLevel"`
 }
-
 
 func Load(path string) (*Config, error) {
 	if err := godotenv.Load(); err != nil {
@@ -24,14 +24,14 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return &Config{}, fmt.Errorf("read %s: %w", path, err)
 	}
-	
+
 	if err := yaml.Unmarshal(file, &cfg); err != nil {
 		return &Config{}, fmt.Errorf("parse %s: %w", path, err)
 	}
 
-	cfg.TelegramToken = os.Getenv("APP_TELEGRAM_TOKEN");
+	cfg.TelegramToken = os.Getenv("APP_TELEGRAM_TOKEN")
 	if cfg.TelegramToken == "" {
-		return &Config{}, fmt.Errorf("APP_TELEGRAM_TOKEN is not get");
+		return &Config{}, fmt.Errorf("APP_TELEGRAM_TOKEN is not get")
 	}
 
 	if cfg.LogLevel == "" {

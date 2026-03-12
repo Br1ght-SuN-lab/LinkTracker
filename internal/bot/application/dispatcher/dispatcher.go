@@ -1,78 +1,41 @@
 package dispatcher
 
 import (
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handler"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
 )
 
-type HandlerFunc func() string //тип для функции
-
-type Command struct {
-	Handler HandlerFunc
-	Desc    string
-}
 type Dispatcher struct {
-	handlers map[string]Command
-	unknown HandlerFunc
+	handlers map[command.Name]command.Handler
+	meta     map[command.Name]string
 }
-
 
 func New() *Dispatcher { //возвращаем указатель, чтобы иметь возможность менять содержание handlers в будущем
 	return &Dispatcher{
-		handlers: map[string]Command{},
-		unknown:  handler.Unknown,
+		handlers: make(map[command.Name]command.Handler),
+		meta:     make(map[command.Name]string),
 	}
 }
 
-func (d *Dispatcher) Register(cmd string, desc string, h HandlerFunc) {
-	d.handlers[cmd] = Command{
-		Handler: h,
-		Desc:    desc,
-	}
+func (d *Dispatcher) Register(name command.Name, desc string, h command.Handler) {
+	d.handlers[name] = h
+	d.meta[name] = desc
 }
-
-
-func (d *Dispatcher) RegistrationCommands() {
-    d.Register("start", "запуск телеграмм бота", handler.Start)
-	d.Register("help", "список доступных команд", handler.Help(d))
-}
-
-
-func (d *Dispatcher) Find(cmd string) (HandlerFunc, bool) {
-	c, ok := d.handlers[cmd]
-	if !ok {
-		return nil, false
-	}
-
-	return c.Handler, true
-}
-
-
-func (d *Dispatcher) UnknownText() string {
-	return d.unknown()
-}
-
 
 func (d *Dispatcher) Commands() []command.Meta {
-	out := make([]command.Meta, 0, len(d.handlers))
-	for k, v := range d.handlers {
+	out := make([]command.Meta, 0, len(d.meta))
+	for name, desc := range d.meta {
 		out = append(out, command.Meta{
-			Cmd: k, 
-			Desc: v.Desc,
+			Name: name,
+			Desc: desc,
 		})
 	}
 	return out
 }
 
-
-func (d *Dispatcher) Dispatch(text string) (reply string, ok bool) {
-	if text == "" {
+func (d *Dispatcher) Dispatch(name command.Name) (string, bool) {
+	h, ok := d.handlers[name]
+	if !ok {
 		return "", false
 	}
-
-	h, exists := d.Find(text)
-	if !exists {
-		return d.UnknownText(), true
-	}
-	return h(), true
+	return h.Handle(), true
 }

@@ -1,5 +1,7 @@
 package handler
 
-func Start() string {
-	return "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды."
+type Start struct{}
+
+func (c Start) Handle() string {
+	return "Привет! Чтобы посмотреть список доступных команд, воспользуйся командой /help"
 }
