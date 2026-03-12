@@ -62,10 +62,7 @@ func (a *App) Run(ctx context.Context) error {
 			"text", text,
 		)
 
-		reply, ok := a.dispatcher.Dispatch(command.Name(cmd))
-		if !ok {
-			continue
-		}
+		reply:= a.dispatcher.Dispatch(command.Name(cmd))
 
 		a.log.Info("reply prepared",
 			"chat_id", chatID,

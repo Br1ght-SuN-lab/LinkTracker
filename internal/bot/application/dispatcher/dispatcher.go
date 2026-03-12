@@ -1,6 +1,7 @@
 package dispatcher
 
 import (
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handler"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
 )
 
@@ -32,10 +33,10 @@ func (d *Dispatcher) Commands() []command.Meta {
 	return out
 }
 
-func (d *Dispatcher) Dispatch(name command.Name) (string, bool) {
+func (d *Dispatcher) Dispatch(name command.Name) string {
 	h, ok := d.handlers[name]
 	if !ok {
-		return "", false
+		return handler.Unknown{}.Handle()
 	}
-	return h.Handle(), true
+	return h.Handle()
 }

@@ -19,8 +19,7 @@ func TestRegisterAndDispatch(t *testing.T) {
 		},
 	})
 
-	got, ok := d.Dispatch("start")
-	require.True(t, ok)
+	got:= d.Dispatch("start")
 	require.Equal(t, "Привет! Чтобы посмотреть список доступных команд, воспользуйся командой /help", got)
 
 	require.Len(t, d.Commands(), 2)
