@@ -12,15 +12,7 @@ type Help struct {
 	Descriptions map[command.Name]string
 }
 
-func (Help) Name() command.Name {
-	return command.Help
-}
-
-func (Help) Description() string {
-	return "список доступных команд"
-}
-
-func (c Help) Handle() string {
+func (c Help) Handle(req command.Request) string {
 	var names []string
 	for name := range c.Descriptions {
 		names = append(names, string(name))

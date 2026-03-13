@@ -3,12 +3,15 @@ package app
 import (
 	"context"
 	"log/slog"
+	"net/http"
 
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/dispatcher"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handler"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/config"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/telegram"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/client"
 )
 
 type App struct {
@@ -16,36 +19,45 @@ type App struct {
 	log        *slog.Logger
 	telegram   *telegram.TelegramBot
 	dispatcher *dispatcher.Dispatcher
-	commands   map[command.Name]string
+	botService *application.Service
 }
+
 
 func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot) *App {
 	d := dispatcher.New()
+
+	httpClient := &http.Client{}
+
+	scrapperClient := client.New("http://localhost:8081", httpClient)
+	botService := application.NewService(scrapperClient)
+	
+	return &App{
+		token:      cfg.TelegramToken,
+		log:        logger,
+		telegram:   telegram,
+		dispatcher: d,
+		botService: botService,
+	}
+}
+
+func (a *App) Run(ctx context.Context) error {
+	bot := a.telegram
 
 	descriptions := map[command.Name]string{
 		command.Start: "запуск телеграмм бота",
 		command.Help:  "список доступных команд",
 	}
 
-	return &App{
-		token:      cfg.TelegramToken,
-		log:        logger,
-		telegram:   telegram,
-		dispatcher: d,
-		commands: descriptions,
+	startcmd := handler.Start{
+		Service: a.botService,
 	}
-}
 
-func (a *App) Run(ctx context.Context) error {
-	startcmd := handler.Start{}
 	helpcmd := handler.Help{
-		Descriptions: a.commands,
+		Descriptions: descriptions,
 	}
 
-	a.dispatcher.Register(startcmd)
-	a.dispatcher.Register(helpcmd)
-
-	bot := a.telegram
+	a.dispatcher.Register(command.Start, descriptions[command.Start], startcmd)
+	a.dispatcher.Register(command.Help, descriptions[command.Help], helpcmd)
 
 	if err := bot.SetCommands(a.commands); err != nil {
 		a.log.Info("mycommands not register in tg_bot",
@@ -59,12 +71,21 @@ func (a *App) Run(ctx context.Context) error {
 		cmd := event.Command
 		chatID := event.ChatID
 
+		req := command.Request{
+			Context: ctx,
+			ChatID: chatID,
+			Text: text,
+		}
+
 		a.log.Info("update received",
 			"chat_id", chatID,
 			"text", text,
 		)
 
-		reply:= a.dispatcher.Dispatch(command.Name(cmd))
+		reply, ok := a.dispatcher.Dispatch(command.Name(cmd), req)
+		if !ok {
+			continue
+		}
 
 		a.log.Info("reply prepared",
 			"chat_id", chatID,

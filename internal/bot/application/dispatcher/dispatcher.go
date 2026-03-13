@@ -26,10 +26,11 @@ func (d *Dispatcher) Register(h Handler) {
 }
 
 
-func (d *Dispatcher) Dispatch(name command.Name) string {
+func (d *Dispatcher) Dispatch(name command.Name, req command.Request) (string, bool) {
 	h, ok := d.handlers[name]
 	if !ok {
 		return handler.Unknown{}.Handle()
 	}
-	return h.Handle()
+
+	return h.Handle(req), true
 }
