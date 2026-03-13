@@ -20,9 +20,10 @@ Telegram Bot Token
 Создайте бота через @BotFather в Telegram и получите токен.
 
 2. Создайте файл .env 
-3. Поместите токен в .env файл, пример: 
+3. Поместите токен и порт в .env файл, пример: 
 ```bash
 APP_TELEGRAM_TOKEN="<YOUR_TOKEN_NAME>"
+SCRAPPER_PORT=<number>
 ```
 
 Запуск бота

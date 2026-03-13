@@ -15,7 +15,7 @@ import (
 func main() {
 	cfg, err := config.Load("config.yaml")
 	if err != nil {
-		log.Fatalf("failed to load config: %v\n", err) //не придумал как без нагромождений логгировать
+		log.Fatalf("failed to load config: %v\n", err)
 	}
 
 	logger := logger.New(cfg.LogLevel)

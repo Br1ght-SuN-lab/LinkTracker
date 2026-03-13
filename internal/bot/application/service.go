@@ -15,3 +15,8 @@ func NewService(scrapper ScrapperClient) *Service {
 func (s *Service) RegisterChat(ctx context.Context, chatID int64) error {
 	return s.scrapper.RegisterChat(ctx, chatID)
 }
+
+
+func (s *Service) DeleteChat(ctx context.Context, chatID int64) error {
+	return s.scrapper.DeleteChat(ctx, chatID)
+}
