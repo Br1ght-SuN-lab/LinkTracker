@@ -1,6 +1,16 @@
-package command
+package domain
 
-import "context"
+import(
+	"time"
+	"context"
+)
+
+type Event struct {
+	Text    string
+	ChatID  int64
+	Command string
+	Time    time.Time
+}
 
 type Name string
 
@@ -16,9 +26,4 @@ type Request struct {
 }
 type Handler interface {
 	Handle(req Request) string
-}
-
-type Meta struct {
-	Name Name
-	Desc string
 }

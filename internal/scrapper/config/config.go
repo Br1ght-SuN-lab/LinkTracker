@@ -3,26 +3,24 @@ package config
 import (
 	"fmt"
 	"os"
-	"github.com/joho/godotenv"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
 	Port string
 }
 
-func Load() (*Config, error) {
-	if err := godotenv.Load(); err != nil {
-		return &Config{}, fmt.Errorf("failed to load .env: %w", err)
-	}
+func Load(path string) (*Config, error) {
+	cfg := &Config{}
+	file, err := os.ReadFile(path)
 	
-	port := os.Getenv("SCRAPPER_PORT")
-	if port == "" {
-		return nil, fmt.Errorf("SCRAPPER_PORT is not set")
+	if err != nil {
+		return &Config{}, fmt.Errorf("read %s: %w", path, err)
 	}
-	
-	return &Config{
-		Port: port,
-	}, nil
-}
 
-//доделываю
+	if err := yaml.Unmarshal(file, &cfg); err != nil {
+		return &Config{}, fmt.Errorf("parse %s: %w", path, err)
+	}
+
+	return cfg, nil
+}

@@ -5,8 +5,7 @@ import (
 	"fmt"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/types"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain"
 )
 
 type TelegramBot struct {
@@ -24,7 +23,7 @@ func NewTelegramBot(token string) (*TelegramBot, error) {
 	}, nil
 }
 
-func (bot *TelegramBot) SetCommands(commands map[command.Name]string) error {
+func (bot *TelegramBot) SetCommands(commands map[domain.Name]string) error {
 	cmds := make([]tgbotapi.BotCommand, 0, len(commands))
 	for k, v := range commands {
 		cmds = append(cmds, tgbotapi.BotCommand{
@@ -38,8 +37,8 @@ func (bot *TelegramBot) SetCommands(commands map[command.Name]string) error {
 	return err
 }
 
-func (bot *TelegramBot) ReceiveMessages(ctx context.Context) <-chan types.Event {
-	eventChan := make(chan types.Event, 100)
+func (bot *TelegramBot) ReceiveMessages(ctx context.Context) <-chan domain.Event {
+	eventChan := make(chan domain.Event, 100)
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -60,7 +59,7 @@ func (bot *TelegramBot) ReceiveMessages(ctx context.Context) <-chan types.Event 
 
 				event := bot.convertUpdate(&update)
 				select {
-				case eventChan <- *event:
+				case eventChan <- event:
 				case <-ctx.Done():
 					return
 				}
@@ -71,11 +70,11 @@ func (bot *TelegramBot) ReceiveMessages(ctx context.Context) <-chan types.Event 
 	return eventChan
 }
 
-func (bot *TelegramBot) convertUpdate(update *tgbotapi.Update) *types.Event {
+func (bot *TelegramBot) convertUpdate(update *tgbotapi.Update) domain.Event {
 	if update.Message != nil {
 		msg := update.Message
 
-		event := &types.Event{
+		event := domain.Event{
 			Text:   msg.Text,
 			ChatID: msg.Chat.ID,
 			Time:   msg.Time(),
@@ -88,7 +87,7 @@ func (bot *TelegramBot) convertUpdate(update *tgbotapi.Update) *types.Event {
 		return event
 	}
 
-	return nil
+	return domain.Event{}
 }
 
 func (bot *TelegramBot) Send(chatID int64, text string) error {

@@ -11,7 +11,10 @@ import (
 type Config struct {
 	TelegramToken string
 	LogLevel      logger.LogLevel `yaml:"logLevel"`
+	BaseUrl       string `yaml:"baseURL"`
+	Port          string `yaml:"port"`
 }
+
 
 func Load(path string) (*Config, error) {
 	if err := godotenv.Load(); err != nil {
@@ -21,6 +24,7 @@ func Load(path string) (*Config, error) {
 	cfg := Config{}
 
 	file, err := os.ReadFile(path)
+	
 	if err != nil {
 		return &Config{}, fmt.Errorf("read %s: %w", path, err)
 	}

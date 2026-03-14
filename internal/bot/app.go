@@ -8,7 +8,7 @@ import (
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/dispatcher"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/application/handler"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/config"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/infrastructure/telegram"
 	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/infrastructure/client"
@@ -28,7 +28,7 @@ func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot
 
 	httpClient := &http.Client{}
 
-	scrapperClient := client.New("http://localhost:8081", httpClient)
+	scrapperClient := client.New(cfg.BaseUrl+cfg.Port, httpClient)
 	botService := application.NewService(scrapperClient)
 	
 	return &App{
@@ -43,12 +43,13 @@ func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot
 func (a *App) Run(ctx context.Context) error {
 	bot := a.telegram
 
-	descriptions := map[command.Name]string{
-		command.Start: "запуск телеграмм бота",
-		command.Help:  "список доступных команд",
+	descriptions := map[domain.Name]string{
+		domain.Start: "запуск телеграмм бота",
+		domain.Help:  "список доступных команд",
 	}
 
 	startcmd := handler.Start{
+		Logger: a.log,
 		Service: a.botService,
 	}
 
@@ -56,8 +57,8 @@ func (a *App) Run(ctx context.Context) error {
 		Descriptions: descriptions,
 	}
 
-	a.dispatcher.Register(command.Start, descriptions[command.Start], startcmd)
-	a.dispatcher.Register(command.Help, descriptions[command.Help], helpcmd)
+	a.dispatcher.Register(domain.Start, descriptions[domain.Start], startcmd)
+	a.dispatcher.Register(domain.Help, descriptions[domain.Help], helpcmd)
 
 	if err := bot.SetCommands(descriptions); err != nil {
 		a.log.Info("mycommands not register in tg_bot", "error", err)
@@ -70,7 +71,7 @@ func (a *App) Run(ctx context.Context) error {
 		cmd := event.Command
 		chatID := event.ChatID
 
-		req := command.Request{
+		req := domain.Request{
 			Context: ctx,
 			ChatID: chatID,
 			Text: text,
@@ -81,7 +82,7 @@ func (a *App) Run(ctx context.Context) error {
 			"text", text,
 		)
 
-		reply:= a.dispatcher.Dispatch(command.Name(cmd), req)
+		reply:= a.dispatcher.Dispatch(domain.Name(cmd), req)
 
 		a.log.Info("reply prepared",
 			"chat_id", chatID,

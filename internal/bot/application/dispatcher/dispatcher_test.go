@@ -4,20 +4,20 @@ import (
 	"testing"
 	"context"
 	"github.com/stretchr/testify/require"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain/command"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain"
 )
 
 type stubHandler struct {
 	response string
 }
 
-func (h stubHandler) Handle(req command.Request) string {
+func (h stubHandler) Handle(req domain.Request) string {
 	return h.response
 }
 func TestRegisterAndDispatch(t *testing.T) {
 	d := New()
 
-	req := command.Request{
+	req := domain.Request{
 		Context: context.Background(),
 		ChatID:  123,
 		Text:    "/start",
