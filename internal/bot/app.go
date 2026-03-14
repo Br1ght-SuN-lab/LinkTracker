@@ -59,9 +59,8 @@ func (a *App) Run(ctx context.Context) error {
 	a.dispatcher.Register(command.Start, descriptions[command.Start], startcmd)
 	a.dispatcher.Register(command.Help, descriptions[command.Help], helpcmd)
 
-	if err := bot.SetCommands(a.commands); err != nil {
-		a.log.Info("mycommands not register in tg_bot",
-			"error", err)
+	if err := bot.SetCommands(descriptions); err != nil {
+		a.log.Info("mycommands not register in tg_bot", "error", err)
 	}
 
 	events := bot.ReceiveMessages(ctx)
@@ -82,10 +81,7 @@ func (a *App) Run(ctx context.Context) error {
 			"text", text,
 		)
 
-		reply, ok := a.dispatcher.Dispatch(command.Name(cmd), req)
-		if !ok {
-			continue
-		}
+		reply:= a.dispatcher.Dispatch(command.Name(cmd), req)
 
 		a.log.Info("reply prepared",
 			"chat_id", chatID,

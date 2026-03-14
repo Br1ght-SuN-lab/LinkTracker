@@ -30,10 +30,7 @@ func TestRegisterAndDispatch(t *testing.T) {
 		response: "help response",
 	})
 
-	got, ok := d.Dispatch("start", req)
-	require.True(t, ok)
+	got:= d.Dispatch("start", req)
 	require.Equal(t, "start response", got)
-	require.Len(t, d.Commands(), 2)
+	require.Len(t, d.handlers, 2)
 }
-
-

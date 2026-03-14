@@ -11,7 +11,7 @@ type Start struct {
 
 func (s Start) Handle(req command.Request) string {
 	if err := s.Service.RegisterChat(req.Context, req.ChatID); err != nil {
-		return "Ошибка регистрации чата"
+		return "Ошибка регистрации чата" + err.Error()
 	}
 	return "Привет! Чтобы посмотреть список доступных команд, воспользуйся командой /help"
 }

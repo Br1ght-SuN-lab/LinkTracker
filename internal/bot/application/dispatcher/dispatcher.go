@@ -6,31 +6,31 @@ import (
 )
 
 type Handler interface {
-	Handle() string
-	Name() command.Name
-	Description() string 
+	Handle(command.Request) string
 }
 
 type Dispatcher struct {
-	handlers map[command.Name]Handler
+	handlers     map[command.Name]Handler
+	descriptions map[command.Name]string
 }
 
-func New() *Dispatcher { //возвращаем указатель, чтобы иметь возможность менять содержание handlers в будущем
+func New() *Dispatcher {
 	return &Dispatcher{
-		handlers: make(map[command.Name]Handler),
+		handlers:     make(map[command.Name]Handler),
+		descriptions: make(map[command.Name]string),
 	}
 }
 
-func (d *Dispatcher) Register(h Handler) {
-	d.handlers[h.Name()] = h
+func (d *Dispatcher) Register(name command.Name, desc string, h Handler) {
+	d.handlers[name] = h
+	d.descriptions[name] = desc
 }
 
-
-func (d *Dispatcher) Dispatch(name command.Name, req command.Request) (string, bool) {
+func (d *Dispatcher) Dispatch(name command.Name, req command.Request) string {
 	h, ok := d.handlers[name]
 	if !ok {
 		return handler.Unknown{}.Handle()
 	}
 
-	return h.Handle(req), true
+	return h.Handle(req)
 }

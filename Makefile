@@ -31,5 +31,11 @@ test:
 	@go test -coverpkg='gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/...' --race -count=1 -coverprofile='$(COVERAGE_FILE)' ./...
 	@go tool cover -func='$(COVERAGE_FILE)' | grep ^total | tr -s '\t'
 
-run:
+run-bot:
 	go run ./cmd/bot
+
+run-scrapper:
+	go run ./cmd/scrapper
+
+run:
+	make run-scrapper & make run-bot
