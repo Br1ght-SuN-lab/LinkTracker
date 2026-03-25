@@ -22,5 +22,5 @@ func main() {
 	if err := App.Run(); err != nil {
 		logger.Error("scrapper not listen", "error", err)
 	}
-
+	
 }

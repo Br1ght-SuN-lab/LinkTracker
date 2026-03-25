@@ -21,6 +21,20 @@ func NewServer(service *application.Service, cfg *config.Config) *nethttp.Server
 			w.WriteHeader(nethttp.StatusMethodNotAllowed)
 		}
 	})
+
+	mux.HandleFunc("/links", func(w nethttp.ResponseWriter, r *nethttp.Request) {
+		switch r.Method {
+		case nethttp.MethodGet:
+			handler.ListLinks(w, r)
+		case nethttp.MethodPost:
+			handler.AddLink(w, r)
+		case nethttp.MethodDelete:
+			handler.RemoveLink(w, r)
+		default:
+			w.WriteHeader(nethttp.StatusMethodNotAllowed)
+		}
+	})
+	
 	return &nethttp.Server{
 		Addr:    ":" + cfg.Port,
 		Handler: mux,

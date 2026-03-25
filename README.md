@@ -23,14 +23,14 @@ Telegram Bot Token
 3. Поместите токен и порт в .env файл, пример: 
 ```bash
 APP_TELEGRAM_TOKEN="<YOUR_TOKEN_NAME>"
-SCRAPPER_PORT=<number>
 ```
 
 Запуск бота
 
 В Git Bash / Linux / MacOS:
 ```bash
-make run
+make run-bot - бот
+make run-scrapper - скрапер
 ```
 
 После запуска бот начинает получать обновления через long polling.

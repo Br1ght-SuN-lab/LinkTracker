@@ -17,6 +17,10 @@ type Name string
 const (
 	Start Name = "start"
 	Help  Name = "help"
+	Track Name = "track"
+	Cancel Name = "cancel"
+	List Name = "list"
+	Untrack Name = "untrack"
 )
 
 type Request struct {
@@ -24,6 +28,7 @@ type Request struct {
 	ChatID  int64
 	Text    string
 }
+
 type Handler interface {
 	Handle(req Request) string
 }

@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"time"
 	"log/slog"
 	nethttp "net/http"
 
@@ -19,8 +21,11 @@ type App struct {
 
 func New(cfg *config.Config, logger *slog.Logger) *App{
 	chats := memory.NewChatRepository()
-	service := application.NewService(chats)
+	links := memory.NewLinkRepository()
+	service := application.NewService(chats, links)
 	server := httpserver.NewServer(service, cfg)
+	updater := application.NewUpdater(links, logger, 30*time.Second)
+	go updater.Run(context.Background())
 
 	return &App{
 		config: cfg,

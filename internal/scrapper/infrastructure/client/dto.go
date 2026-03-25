@@ -1,32 +1,31 @@
 package client
 
-
 type LinkResponseDTO struct {
-	ID int64         `yaml:"id"`
-	URL string       `yaml:"url"`
-	Tags []string    `yaml:"tags"`
-	Filters []string `yaml:"filters"`
+	ID      int64    `json:"id"`
+	URL     string   `json:"url"`
+	Tags    []string `json:"tags"`
+	Filters []string `json:"filters"`
 }
 
 type ApiErrorResponseDTO struct {
-	Description string      `yaml:"description"`
-	Code string             `yaml:"code"`
-	ExceptionName string    `yaml:"exceptionName"`
-	ExceptionMessage string `yaml:"exceptionMessage"`
-	Stacktrace []string     `yaml:"stacktrace"`
+	Description      string   `json:"description"`
+	Code             string   `json:"code"`
+	ExceptionName    string   `json:"exceptionName"`
+	ExceptionMessage string   `json:"exceptionMessage"`
+	Stacktrace       []string `json:"stacktrace"`
 }
 
 type AddLinkRequestDTO struct {
-	Link string      `yaml:"link"`
-	Tags []string    `yaml:"tags"`
-	Filters []string `yaml:"filters"`
+	Link    string   `json:"link"`
+	Tags    []string `json:"tags"`
+	Filters []string `json:"filters"`
 }
 
 type ListLinksResponseDTO struct {
-	Links []LinkResponseDTO `yaml:"links"`
-	Size int32     `yaml:"size"`
+	Links []LinkResponseDTO `json:"links"`
+	Size  int32             `json:"size"`
 }
 
 type RemoveLinkRequestDTO struct {
-	Link string `yaml:"link"`
+	Link string `json:"link"`
 }
