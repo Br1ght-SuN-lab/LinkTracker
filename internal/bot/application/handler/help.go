@@ -1,0 +1,29 @@
+package handler
+
+import (
+	"fmt"
+	"sort"
+	"strings"
+
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/bot/domain"
+)
+
+type Help struct {
+	Descriptions map[domain.Name]string
+}
+
+func (c Help) Handle(req domain.Request) string {
+	var names []string
+	for name := range c.Descriptions {
+		names = append(names, string(name))
+	}
+
+	sort.Strings(names)
+	var b strings.Builder
+	b.WriteString("Доступные команды:\n")
+	for _, name := range names {
+		b.WriteString(fmt.Sprintf("/%s — %s\n", name, c.Descriptions[domain.Name(name)]))
+	}
+
+	return b.String()
+}
