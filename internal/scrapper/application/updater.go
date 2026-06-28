@@ -2,9 +2,9 @@ package application
 
 import (
 	"context"
+	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/domain"
 	"log/slog"
 	"time"
-	"gitlab.education.tbank.ru/backend-academy-go-2025/homeworks/link-tracker/internal/scrapper/domain"
 )
 
 type AllLinksGetter interface {
@@ -12,16 +12,18 @@ type AllLinksGetter interface {
 }
 
 type Updater struct {
-	links AllLinksGetter
-	logger  *slog.Logger
-	period  time.Duration
+	links    AllLinksGetter
+	checkers []LinkChecker
+	logger   *slog.Logger
+	period   time.Duration
 }
 
-func NewUpdater(links AllLinksGetter, logger *slog.Logger, period time.Duration) *Updater {
+func NewUpdater(links AllLinksGetter, checkers []LinkChecker, logger *slog.Logger, period time.Duration) *Updater {
 	return &Updater{
-		links:  links,
-		logger: logger,
-		period: period,
+		links:    links,
+		checkers: checkers,
+		logger:   logger,
+		period:   period,
 	}
 }
 
@@ -55,13 +57,34 @@ func (u *Updater) checkAllLinks(ctx context.Context) {
 	}
 
 	for _, link := range links {
-		u.logger.Info("checking tracked link",
-			"chat_id", link.ChatID,
-			"link_id", link.ID,
-			"url", link.URL,
-		)
+		var checker LinkChecker
 
-		//уже нереально успеть написать github и stackoverflow...просто лог что обновляю ссылки
-		//показываю обновление ссылок без внешнего API
+		for _, ch := range u.checkers {
+			if ch.Supports(link.URL) {
+				checker = ch
+				break
+			}
+		}
+
+		if checker == nil {
+			u.logger.Warn("no checker for link", "url", link.URL)
+			continue
+		}
+
+		result, err := checker.Check(ctx, link)
+		if err != nil {
+			u.logger.Error("failed to check link", "url", link.URL, "error", err)
+			continue
+		}
+
+		if result.HasUpdates {
+			u.logger.Info("link updated",
+				"url", link.URL,
+				"description", result.Description,
+				"updated_at", result.NewUpdatedAt,
+			)
+		} else {
+			u.logger.Info("no updates", "url", link.URL)
+		}
 	}
 }

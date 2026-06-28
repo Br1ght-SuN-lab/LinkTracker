@@ -22,7 +22,6 @@ type App struct {
 	botService *application.Service
 }
 
-
 func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot) *App {
 	d := dispatcher.New()
 
@@ -31,7 +30,7 @@ func New(cfg *config.Config, logger *slog.Logger, telegram *telegram.TelegramBot
 	scrapperClient := client.New(cfg.BaseUrl+cfg.Port, httpClient)
 
 	botService := application.NewService(scrapperClient)
-	
+
 	return &App{
 		token:      cfg.TelegramToken,
 		log:        logger,
@@ -45,16 +44,16 @@ func (a *App) Run(ctx context.Context) error {
 	bot := a.telegram
 
 	descriptions := map[domain.Name]string{
-		domain.Start: "запуск телеграмм бота",
-		domain.Help:  "список доступных команд",
-		domain.Track: "добавить отслеживание ссылки",
-		domain.Cancel: "отмена добавления ссылки",
-		domain.List: "Список отслеживаемых ссылок",
+		domain.Start:   "запуск телеграмм бота",
+		domain.Help:    "список доступных команд",
+		domain.Track:   "добавить отслеживание ссылки",
+		domain.Cancel:  "отмена добавления ссылки",
+		domain.List:    "Список отслеживаемых ссылок",
 		domain.Untrack: "Удаление ссылки",
 	}
 
 	startcmd := handler.Start{
-		Logger: a.log,
+		Logger:  a.log,
 		Service: a.botService,
 	}
 
@@ -72,9 +71,10 @@ func (a *App) Run(ctx context.Context) error {
 
 	listcmd := handler.List{
 		Service: a.botService,
+		Logger:  a.log,
 	}
 
-	untrackcmd := handler.Untrack {
+	untrackcmd := handler.Untrack{
 		Service: a.botService,
 	}
 
@@ -98,8 +98,8 @@ func (a *App) Run(ctx context.Context) error {
 
 		req := domain.Request{
 			Context: ctx,
-			ChatID: chatID,
-			Text: text,
+			ChatID:  chatID,
+			Text:    text,
 		}
 
 		a.log.Info("update received",

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -10,12 +11,14 @@ import (
 
 type List struct {
 	Service *application.Service
+	Logger  *slog.Logger
 }
 
 func (h List) Handle(req domain.Request) string {
 	links, err := h.Service.ListLinks(req.Context, req.ChatID)
 	if err != nil {
-		return "Не удалось получить список ссылок: " + err.Error()
+		h.Logger.Info("failed to get links", "error", err)
+		return "Не удалось получить список ссылок"
 	}
 
 	if len(links) == 0 {
@@ -26,7 +29,7 @@ func (h List) Handle(req domain.Request) string {
 	b.WriteString("Отслеживаемые ссылки:\n")
 
 	for i, link := range links {
-		b.WriteString(strconv.Itoa(i+1))
+		b.WriteString(strconv.Itoa(i + 1))
 		b.WriteString(": ")
 		b.WriteString(link.URL)
 		if i != len(links)-1 {
